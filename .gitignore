@@ -1,0 +1,11 @@
+.env 
+
+*.log
+*.zip
+*.tar
+*.mp4
+*.mp3
+*.exe
+*.dll
+node_modules/
+venv/
