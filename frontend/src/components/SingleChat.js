@@ -4,28 +4,34 @@ import { Box, Text, Flex } from "@chakra-ui/layout";
 import "./styles.css";
 import { IconButton, Spinner, useToast } from "@chakra-ui/react";
 import { getSender, getSenderFull } from "../config/ChatLogics";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { ArrowBackIcon } from "@chakra-ui/icons";
 import ProfileModal from "./miscellaneous/ProfileModal";
 import ScrollableChat from "./ScrollableChat";
 import Lottie from "react-lottie";
 import animationData from "../animations/typing.json";
-
 import io from "socket.io-client";
 import UpdateGroupChatModal from "./miscellaneous/UpdateGroupChatModal";
 import { ChatState } from "../Context/ChatProvider";
+
 const ENDPOINT = "http://localhost:5000";
-var socket, selectedChatCompare;
+let socket; // <-- Only initialized once globally
 
 const SingleChat = ({ fetchAgain, setFetchAgain }) => {
+  // All your usual state & hooks
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [newMessage, setNewMessage] = useState("");
   const [socketConnected, setSocketConnected] = useState(false);
   const [typing, setTyping] = useState(false);
   const [istyping, setIsTyping] = useState(false);
+
   const toast = useToast();
+
+  const { selectedChat, setSelectedChat, user } = ChatState();
+  const selectedChatCompare = useRef();
+  const lastTypingTime = useRef(null);
 
   const defaultOptions = {
     loop: true,
@@ -35,27 +41,48 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       preserveAspectRatio: "xMidYMid slice",
     },
   };
-  const { selectedChat, setSelectedChat, user } = ChatState();
 
+  // Connect socket ONCE
+  useEffect(() => {
+    if (!socket) {
+      socket = io(ENDPOINT);
+    }
+    // Do not emit "setup" here!
+  }, []);
+
+  // Emit setup ONLY after user is available
+  useEffect(() => {
+    if (user && socket) {
+      socket.emit("setup", user);
+
+      socket.on("connected", () => setSocketConnected(true));
+      socket.on("typing", () => setIsTyping(true));
+      socket.on("stop typing", () => setIsTyping(false));
+
+      return () => {
+        socket.off("connected");
+        socket.off("typing");
+        socket.off("stop typing");
+      };
+    }
+  }, [user]);
+
+  // Fetch messages whenever chat is changed
   const fetchMessages = async () => {
     if (!selectedChat) return;
-
     try {
       const config = {
         headers: {
           Authorization: `Bearer ${user.token}`,
         },
       };
-
       setLoading(true);
-
       const { data } = await axios.get(
         `/api/message/${selectedChat._id}`,
         config
       );
       setMessages(data);
       setLoading(false);
-
       socket.emit("join chat", selectedChat._id);
     } catch (error) {
       toast({
@@ -69,6 +96,36 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     }
   };
 
+  useEffect(() => {
+    fetchMessages();
+    selectedChatCompare.current = selectedChat;
+    // eslint-disable-next-line
+  }, [selectedChat]);
+
+  // Listen for new messages only once
+  useEffect(() => {
+    const handleNewMessage = (newMessageReceived) => {
+      if (
+        !selectedChatCompare.current ||
+        selectedChatCompare.current._id !== newMessageReceived.chat._id
+      ) {
+        setFetchAgain((prev) => !prev);
+      } else {
+        setMessages((prevMessages) => [...prevMessages, newMessageReceived]);
+      }
+    };
+
+    if (socket) {
+      socket.on("message recieved", handleNewMessage);
+    }
+
+    return () => {
+      if (socket) socket.off("message recieved", handleNewMessage);
+    };
+    // eslint-disable-next-line
+  }, []);
+
+  // Send message
   const sendMessage = async (event) => {
     if (event.key === "Enter" && newMessage) {
       socket.emit("stop typing", selectedChat._id);
@@ -89,7 +146,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
           config
         );
         socket.emit("new message", data);
-        setMessages([...messages, data]);
+        setMessages((prev) => [...prev, data]);
       } catch (error) {
         toast({
           title: "Error Occurred!",
@@ -103,36 +160,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     }
   };
 
-  useEffect(() => {
-    socket = io(ENDPOINT);
-    socket.emit("setup", user);
-    socket.on("connected", () => setSocketConnected(true));
-    socket.on("typing", () => setIsTyping(true));
-    socket.on("stop typing", () => setIsTyping(false));
-
-    // eslint-disable-next-line
-  }, []);
-
-  useEffect(() => {
-    fetchMessages();
-
-    selectedChatCompare = selectedChat;
-    // eslint-disable-next-line
-  }, [selectedChat]);
-
-  useEffect(() => {
-    socket.on("message recieved", (newMessageRecieved) => {
-      if (
-        !selectedChatCompare ||
-        selectedChatCompare._id !== newMessageRecieved.chat._id
-      ) {
-        
-        setFetchAgain(!fetchAgain);
-      } else {
-        setMessages([...messages, newMessageRecieved]);
-      }
-    });
-  });
+  // Typing handlers remain the same as your original
 
   const typingHandler = (e) => {
     setNewMessage(e.target.value);
@@ -143,11 +171,14 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       setTyping(true);
       socket.emit("typing", selectedChat._id);
     }
-    let lastTypingTime = new Date().getTime();
-    var timerLength = 3000;
+
+    lastTypingTime.current = new Date().getTime();
+    const timerLength = 3000;
+
     setTimeout(() => {
-      var timeNow = new Date().getTime();
-      var timeDiff = timeNow - lastTypingTime;
+      const timeNow = new Date().getTime();
+      const timeDiff = timeNow - lastTypingTime.current;
+
       if (timeDiff >= timerLength && typing) {
         socket.emit("stop typing", selectedChat._id);
         setTyping(false);
@@ -155,6 +186,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     }, timerLength);
   };
 
+  // ... component JSX return as before
   return (
     <>
       {selectedChat ? (
@@ -198,6 +230,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
                 ))}
             </Text>
           </Flex>
+
           <Box
             display="flex"
             flexDir="column"

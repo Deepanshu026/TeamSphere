@@ -19,7 +19,7 @@ import {
 import { Tooltip } from "@chakra-ui/tooltip";
 import { ChevronDownIcon } from "@chakra-ui/icons";
 import { Avatar } from "@chakra-ui/avatar";
-import { useHistory } from "react-router-dom";
+import { useNavigate } from "react-router-dom"; 
 import { useState } from "react";
 import axios from "axios";
 import { useToast } from "@chakra-ui/toast";
@@ -35,20 +35,15 @@ function SideDrawer() {
   const [loading, setLoading] = useState(false);
   const [loadingChat, setLoadingChat] = useState(false);
 
-  const {
-    setSelectedChat,
-    user,
-    chats,
-    setChats,
-  } = ChatState();
+  const { setSelectedChat, user, chats, setChats } = ChatState();
 
   const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const history = useHistory();
+  const navigate = useNavigate(); // ✅ useNavigate instead of useHistory
 
   const logoutHandler = () => {
     localStorage.removeItem("userInfo");
-    history.push("/");
+    navigate("/"); // ✅ navigate instead of history.push
   };
 
   const handleSearch = async () => {
@@ -134,8 +129,13 @@ function SideDrawer() {
             </Text>
           </Button>
         </Tooltip>
-        <Text fontSize="3xl" fontFamily="Work sans">
-          <h1 style={{ color: "orange", fontWeight: "bold" }}>TeamSphere</h1>
+        <Text
+          fontSize="3xl"
+          fontFamily="Work sans"
+          color="orange"
+          fontWeight="bold"
+        >
+          TeamSphere
         </Text>
         <div>
           <Menu>

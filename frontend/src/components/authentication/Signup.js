@@ -1,23 +1,22 @@
 import { Button } from "@chakra-ui/button";
 import { FormControl, FormLabel } from "@chakra-ui/form-control";
 import { Input, InputGroup, InputRightElement } from "@chakra-ui/input";
-import { VStack ,Box} from "@chakra-ui/layout";
-
+import { VStack, Box } from "@chakra-ui/layout";
 import { useToast } from "@chakra-ui/toast";
 import axios from "axios";
 import { useState } from "react";
-import { useHistory } from "react-router";
+import { useNavigate } from "react-router-dom"; // updated import
 
 const Signup = () => {
   const [show, setShow] = useState(false);
   const handleClick = () => setShow(!show);
   const toast = useToast();
- const history = useHistory();
+  const navigate = useNavigate(); // updated
 
-  const [name, setName] = useState();
-  const [email, setEmail] = useState();
-  const [confirmpassword, setConfirmpassword] = useState();
-  const [password, setPassword] = useState();
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [confirmpassword, setConfirmpassword] = useState("");
+  const [password, setPassword] = useState("");
   const [pic, setPic] = useState();
   const [picLoading, setPicLoading] = useState(false);
 
@@ -25,7 +24,7 @@ const Signup = () => {
     setPicLoading(true);
     if (!name || !email || !password || !confirmpassword) {
       toast({
-        title: "Please Fill all the Feilds",
+        title: "Please Fill all the Fields",
         status: "warning",
         duration: 3000,
         isClosable: true,
@@ -42,26 +41,23 @@ const Signup = () => {
         isClosable: true,
         position: "bottom",
       });
+      setPicLoading(false);
       return;
     }
-    console.log(name, email, password, pic);
+
     try {
       const config = {
         headers: {
           "Content-type": "application/json",
         },
       };
+
       const { data } = await axios.post(
         "/api/user",
-        {
-          name,
-          email,
-          password,
-          pic,
-        },
+        { name, email, password, pic },
         config
       );
-      console.log(data);
+
       toast({
         title: "Registration Successful",
         status: "success",
@@ -69,13 +65,14 @@ const Signup = () => {
         isClosable: true,
         position: "bottom",
       });
+
       localStorage.setItem("userInfo", JSON.stringify(data));
       setPicLoading(false);
-       history.push("/chats");
+      navigate("/chats"); //  updated
     } catch (error) {
       toast({
-        title: "Error Occured!",
-        description: error.response.data.message,
+        title: "Error Occurred!",
+        description: error.response?.data?.message || error.message,
         status: "error",
         duration: 5000,
         isClosable: true,
@@ -87,7 +84,7 @@ const Signup = () => {
 
   const postDetails = (pics) => {
     setPicLoading(true);
-    if (pics === undefined) {
+    if (!pics) {
       toast({
         title: "Please Select an Image!",
         status: "warning",
@@ -95,14 +92,16 @@ const Signup = () => {
         isClosable: true,
         position: "bottom",
       });
+      setPicLoading(false);
       return;
     }
-    console.log(pics);
+
     if (pics.type === "image/jpeg" || pics.type === "image/png") {
       const data = new FormData();
       data.append("file", pics);
       data.append("upload_preset", "chat-app");
       data.append("cloud_name", "dpanshu");
+
       fetch("https://api.cloudinary.com/v1_1/dpanshu/image/upload", {
         method: "post",
         body: data,
@@ -110,7 +109,6 @@ const Signup = () => {
         .then((res) => res.json())
         .then((data) => {
           setPic(data.url.toString());
-          console.log(data.url.toString());
           setPicLoading(false);
         })
         .catch((err) => {
@@ -126,7 +124,6 @@ const Signup = () => {
         position: "bottom",
       });
       setPicLoading(false);
-      return;
     }
   };
 
@@ -146,6 +143,7 @@ const Signup = () => {
             onChange={(e) => setName(e.target.value)}
           />
         </FormControl>
+
         <FormControl id="email" isRequired>
           <FormLabel>Email Address</FormLabel>
           <Input
@@ -154,6 +152,7 @@ const Signup = () => {
             onChange={(e) => setEmail(e.target.value)}
           />
         </FormControl>
+
         <FormControl id="password" isRequired>
           <FormLabel>Password</FormLabel>
           <InputGroup size="md">
@@ -169,7 +168,8 @@ const Signup = () => {
             </InputRightElement>
           </InputGroup>
         </FormControl>
-        <FormControl id="password" isRequired>
+
+        <FormControl id="confirm-password" isRequired>
           <FormLabel>Confirm Password</FormLabel>
           <InputGroup size="md">
             <Input
@@ -184,6 +184,7 @@ const Signup = () => {
             </InputRightElement>
           </InputGroup>
         </FormControl>
+
         <FormControl id="pic">
           <FormLabel>Upload your Picture</FormLabel>
           <Input
@@ -193,6 +194,7 @@ const Signup = () => {
             onChange={(e) => postDetails(e.target.files[0])}
           />
         </FormControl>
+
         <Button
           colorScheme="yellow"
           width="50%"
