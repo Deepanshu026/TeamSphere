@@ -129,14 +129,6 @@ function SideDrawer() {
             </Text>
           </Button>
         </Tooltip>
-        <Text
-          fontSize="3xl"
-          fontFamily="Work sans"
-          color="orange"
-          fontWeight="bold"
-        >
-          TeamSphere
-        </Text>
         <div>
           <Menu>
             <MenuButton as={Button} bg="white" rightIcon={<ChevronDownIcon />}>

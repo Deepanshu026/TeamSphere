@@ -16,10 +16,9 @@ import UpdateGroupChatModal from "./miscellaneous/UpdateGroupChatModal";
 import { ChatState } from "../Context/ChatProvider";
 
 const ENDPOINT = "http://localhost:5000";
-let socket; // <-- Only initialized once globally
+let socket;
 
 const SingleChat = ({ fetchAgain, setFetchAgain }) => {
-  // All your usual state & hooks
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [newMessage, setNewMessage] = useState("");
@@ -28,7 +27,6 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   const [istyping, setIsTyping] = useState(false);
 
   const toast = useToast();
-
   const { selectedChat, setSelectedChat, user } = ChatState();
   const selectedChatCompare = useRef();
   const lastTypingTime = useRef(null);
@@ -42,15 +40,12 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     },
   };
 
-  // Connect socket ONCE
   useEffect(() => {
     if (!socket) {
       socket = io(ENDPOINT);
     }
-    // Do not emit "setup" here!
   }, []);
 
-  // Emit setup ONLY after user is available
   useEffect(() => {
     if (user && socket) {
       socket.emit("setup", user);
@@ -67,14 +62,11 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     }
   }, [user]);
 
-  // Fetch messages whenever chat is changed
   const fetchMessages = async () => {
     if (!selectedChat) return;
     try {
       const config = {
-        headers: {
-          Authorization: `Bearer ${user.token}`,
-        },
+        headers: { Authorization: `Bearer ${user.token}` },
       };
       setLoading(true);
       const { data } = await axios.get(
@@ -102,7 +94,6 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     // eslint-disable-next-line
   }, [selectedChat]);
 
-  // Listen for new messages only once
   useEffect(() => {
     const handleNewMessage = (newMessageReceived) => {
       if (
@@ -125,7 +116,6 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     // eslint-disable-next-line
   }, []);
 
-  // Send message
   const sendMessage = async (event) => {
     if (event.key === "Enter" && newMessage) {
       socket.emit("stop typing", selectedChat._id);
@@ -139,10 +129,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         setNewMessage("");
         const { data } = await axios.post(
           "/api/message",
-          {
-            content: newMessage,
-            chatId: selectedChat._id,
-          },
+          { content: newMessage, chatId: selectedChat._id },
           config
         );
         socket.emit("new message", data);
@@ -159,8 +146,6 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       }
     }
   };
-
-  // Typing handlers remain the same as your original
 
   const typingHandler = (e) => {
     setNewMessage(e.target.value);
@@ -186,7 +171,6 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     }, timerLength);
   };
 
-  // ... component JSX return as before
   return (
     <>
       {selectedChat ? (
@@ -199,6 +183,12 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
             fontFamily="Work sans"
             justifyContent="space-between"
             alignItems="center"
+            bg="rgba(255,255,255,0.15)" // Glassy header background
+            borderRadius="md"
+            backdropFilter="blur(10px)"
+            borderWidth="1px"
+            borderColor="rgba(255,255,255,0.3)"
+            boxShadow="0 8px 32px 0 rgba(31,38,135,0.1)"
           >
             <IconButton
               display={{ base: "flex", md: "none" }}
@@ -209,7 +199,13 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
               variant="ghost"
               fontSize="20px"
             />
-            <Text flex="1" fontWeight="bold" color="yellow.400" mx={3}>
+            <Text
+              flex="1"
+              fontWeight="bold"
+              color="yellow.400"
+              mx={3}
+              noOfLines={1}
+            >
               {messages &&
                 (!selectedChat.isGroupChat ? (
                   <>
@@ -236,12 +232,13 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
             flexDir="column"
             justifyContent="flex-end"
             p={4}
-            bg="gray.50"
+            bg="rgba(255, 255, 255, 0.10)" // glassy background
             w="100%"
             h="100%"
             borderRadius="lg"
             overflowY="hidden"
-            boxShadow="inner"
+            boxShadow="inset 0 0 10px rgba(255, 255, 255, 0.1)"
+            backdropFilter="blur(8px)"
           >
             {loading ? (
               <Spinner
@@ -275,6 +272,9 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
                 value={newMessage}
                 onChange={typingHandler}
                 _focus={{ bg: "yellow.200" }}
+                borderRadius="md"
+                boxShadow="sm"
+                transition="background 0.3s"
               />
             </FormControl>
           </Box>
@@ -286,11 +286,13 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
           justifyContent="center"
           h="100%"
           p={4}
-          bg="gray.50"
+          bg="rgba(255, 255, 255, 0.10)" // glassy empty state
           borderRadius="lg"
-          boxShadow="sm"
+          boxShadow="0 4px 30px rgba(0, 0, 0, 0.1)"
+          backdropFilter="blur(8px)"
+          textAlign="center"
         >
-          <Text fontSize="3xl" fontFamily="Work sans" color="yellow.400">
+          <Text fontSize="3xl" fontFamily="Work sans" color="black.800" px={4}>
             Click on a user to start chatting
           </Text>
         </Box>

@@ -11,19 +11,14 @@ import { ChatState } from "../Context/ChatProvider";
 
 const MyChats = ({ fetchAgain }) => {
   const [loggedUser, setLoggedUser] = useState();
-
   const { selectedChat, setSelectedChat, user, chats, setChats } = ChatState();
-
   const toast = useToast();
 
   const fetchChats = async () => {
     try {
       const config = {
-        headers: {
-          Authorization: `Bearer ${user.token}`,
-        },
+        headers: { Authorization: `Bearer ${user.token}` },
       };
-
       const { data } = await axios.get("/api/chat", config);
       setChats(data);
     } catch (error) {
@@ -50,11 +45,12 @@ const MyChats = ({ fetchAgain }) => {
       flexDir="column"
       alignItems="center"
       p={4}
-      bg="white"
+      bg="rgba(255,255,255,0.35)"
+      border="1px solid rgba(255,255,255,0.18)"
+      boxShadow="0 8px 32px 0 rgba(31,38,135,0.10)"
+      backdropFilter="blur(16px)"
+      borderRadius="2xl"
       w={{ base: "100%", md: "32%" }}
-      borderRadius="xl"
-      borderWidth="1px"
-      boxShadow="sm"
       minH="80vh"
     >
       <Flex
@@ -64,7 +60,11 @@ const MyChats = ({ fetchAgain }) => {
         alignItems="center"
         px={2}
       >
-        <Heading fontSize={{ base: "2xl", md: "3xl" }} color="orange.400">
+        <Heading
+          fontSize={{ base: "2xl", md: "3xl" }}
+          color="orange.500"
+          noOfLines={1}
+        >
           My Chats
         </Heading>
         <GroupChatModal>
@@ -76,6 +76,7 @@ const MyChats = ({ fetchAgain }) => {
             _hover={{ bg: "yellow.400" }}
             borderRadius="md"
             boxShadow="md"
+            py={2}
           >
             New Team
           </Button>
@@ -85,10 +86,11 @@ const MyChats = ({ fetchAgain }) => {
       <Box
         flex={1}
         w="100%"
-        bg="black.50"
+        bg="rgba(255,255,255,0.18)"
         borderRadius="lg"
         overflowY="auto"
-        boxShadow="inner"
+        boxShadow="inset 0 0 10px rgba(255,255,255,0.12)"
+        backdropFilter="blur(10px)"
         p={2}
       >
         {chats ? (
@@ -98,16 +100,21 @@ const MyChats = ({ fetchAgain }) => {
                 key={chat._id}
                 onClick={() => setSelectedChat(chat)}
                 cursor="pointer"
-                bg={selectedChat === chat ? "yellow.400" : "yellow.200"}
-                color={selectedChat === chat ? "black" : "black.300"}
+                bg={selectedChat === chat ? "yellow.400" : "yellow.100"}
+                color={selectedChat === chat ? "black" : "blackAlpha.700"}
                 px={4}
                 py={3}
-                borderRadius="md"
+                borderRadius="lg"
                 boxShadow={selectedChat === chat ? "md" : "sm"}
                 _hover={{
-                  bg: selectedChat === chat ? "yellow.300" : "black.100",
+                  boxShadow: "0 4px 24px 0 rgba(31,38,135,0.08)",
+                  transform: "translateY(-2px)",
+                  bg: selectedChat === chat ? "yellow.300" : "yellow.200",
+                  color: selectedChat === chat ? "black" : "black",
+                  transition: "all 0.2s",
                 }}
-                transition="background-color 0.2s ease"
+                mb={2}
+                transition="all 0.2s"
               >
                 <Text fontWeight="bold" fontSize="md" mb={1}>
                   {!chat.isGroupChat
@@ -115,12 +122,8 @@ const MyChats = ({ fetchAgain }) => {
                     : chat.chatName}
                 </Text>
                 {chat.latestMessage && (
-                  <Text
-                    fontSize="sm"
-                    color={selectedChat === chat ? "black.100" : "gray.800"}
-                    noOfLines={1}
-                  >
-                    <b>{chat.latestMessage.sender.name} : </b>
+                  <Text fontSize="sm" color="blackAlpha.600" noOfLines={1}>
+                    <b>{chat.latestMessage.sender.name}:</b>{" "}
                     {chat.latestMessage.content.length > 50
                       ? chat.latestMessage.content.substring(0, 51) + "..."
                       : chat.latestMessage.content}
