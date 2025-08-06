@@ -7,7 +7,7 @@ A real-time chat application built using the **MERN stack**:
 
 ## 💪 Tech Stack
 
-* **Frontend**: React, JavaScript 
+* **Frontend**: React, JavaScript, Chakra UI
 * **Backend**: Node.js, Express, Socket.IO
 * **Database**: MongoDB with Mongoose
 * **Real-time**: Socket.IO
@@ -21,7 +21,6 @@ A real-time chat application built using the **MERN stack**:
 * 🢑 User authentication (signup/login)
 * 🔐 JWT-based authentication
 * 💬 Private and group chat rooms
-* 🟢 Online user indicators
 * 📄 Message history stored in MongoDB
 * 📱 Mobile responsive UI
 * 📷 Typing indicators 
