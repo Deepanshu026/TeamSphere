@@ -14,7 +14,13 @@ const ChatProvider = ({ children }) => {
     const userInfo = JSON.parse(localStorage.getItem("userInfo"));
     setUser(userInfo);
 
-    if (!userInfo) navigate("/");
+    // List of routes that require authentication
+    const protectedRoutes = ["/chats"];
+
+    // Redirect to landing page only if accessing a protected route while not logged in
+    if (!userInfo && protectedRoutes.includes(window.location.pathname)) {
+      navigate("/");
+    }
   }, [navigate]);
 
   return (
